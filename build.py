@@ -346,18 +346,23 @@ def translate(items: list[dict]) -> None:
 
 
 def load_previous() -> list[dict]:
+    """前回の items.json を読む。翻訳済みの内容はここから引き継ぐので、読めないまま進めると
+    全記事を翻訳し直すことになる。そのため取得に失敗したらビルドを中止し、公開中のサイトを残す。"""
     url = os.environ.get("PREV_URL")
     path = OUT / "items.json"
-    try:
-        if url:
-            r = requests.get(url, timeout=20)
-            if r.ok:
-                return r.json()["items"]
-        elif path.exists():
-            return json.loads(path.read_text("utf-8"))["items"]
-    except Exception as e:
-        print(f"  ! 前回データを読めませんでした: {e}", file=sys.stderr)
-    return []
+    if not url:
+        return json.loads(path.read_text("utf-8"))["items"] if path.exists() else []
+    for attempt in range(3):
+        try:
+            r = requests.get(url, timeout=30)
+            if r.status_code == 404:  # 初回公開時のみ
+                return []
+            r.raise_for_status()
+            return r.json()["items"]
+        except Exception as e:
+            print(f"  ! 前回データを読めませんでした ({attempt + 1}/3): {e}", file=sys.stderr)
+            time.sleep(10)
+    sys.exit("前回データを取得できないため中止します (翻訳のやり直しを防ぐため)")
 
 
 def merge(prev: list[dict], fresh: list[dict]) -> list[dict]:
