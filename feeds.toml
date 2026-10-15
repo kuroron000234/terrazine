@@ -1,15 +1,100 @@
-# 収集するフィード一覧
-# region: "en"(英語圏) / "zh"(中華圏)
-# tags:   このフィードの記事に常に付けるタグ (ai / dev / hw)
-# filter: true にすると、キーワードに一致した記事だけ残す (雑多な総合メディア向け)
-# limit:  1回の取得で使う最大件数 (大量に返すフィード対策)
+# TERRAZINE が収集するフィード一覧
+# 方針: 大手メディアより、コミュニティ・個人・一次情報など「早くて実用寄り」のソースを優先
+#
+# region:  "ja"(日本) / "en"(英語圏) / "zh"(中華圏)
+# tags:    このフィードの記事に常に付けるタグ (ai / dev / hw)
+# filter:  true にすると、キーワードに一致した記事だけ残す (雑多なソース向け)
+# exclude: タイトルがこの正規表現に一致する記事は捨てる
+# limit:   1回の取得で使う最大件数
+# og:      false にすると記事ページの og:image を取りに行かない (ロゴしか出ないサイト向け)
+# type:    "5ch" のときは url に板のURLを書く。min_res = 最低レス数
 
-# ---------- 英語圏 ----------
+# ================= 日本 =================
+[[feed]]
+name = "GIGAZINE"
+url = "https://gigazine.net/news/rss_2.0/"
+region = "ja"
+
+[[feed]]
+name = "はてブ IT"
+url = "https://b.hatena.ne.jp/hotentry/it.rss"
+region = "ja"
+
+[[feed]]
+name = "Zenn"
+url = "https://zenn.dev/feed"
+region = "ja"
+tags = ["dev"]
+
+[[feed]]
+name = "Qiita"
+url = "https://qiita.com/popular-items/feed"
+region = "ja"
+tags = ["dev"]
+
+[[feed]]
+name = "Publickey"
+url = "https://www.publickey1.jp/atom.xml"
+region = "ja"
+tags = ["dev"]
+
+[[feed]]
+name = "ITmedia AI+"
+url = "https://rss.itmedia.co.jp/rss/2.0/aiplus.xml"
+region = "ja"
+tags = ["ai"]
+
+[[feed]]
+name = "PC Watch"
+url = "https://pc.watch.impress.co.jp/data/rss/1.0/pcw/feed.rdf"
+region = "ja"
+tags = ["hw"]
+exclude = "お買い得|セール|特価|最安"
+
+[[feed]]
+name = "5ch ニュー速+"
+type = "5ch"
+url = "https://asahi.5ch.io/newsplus/"
+region = "ja"
+filter = true
+og = false
+
+[[feed]]
+name = "5ch ビジネス+"
+type = "5ch"
+url = "https://egg.5ch.io/bizplus/"
+region = "ja"
+filter = true
+min_res = 30
+og = false
+
+[[feed]]
+name = "5ch 科学+"
+type = "5ch"
+url = "https://egg.5ch.io/scienceplus/"
+region = "ja"
+filter = true
+min_res = 20
+og = false
+
+# ================= 英語圏 =================
 [[feed]]
 name = "Hacker News"
 url = "https://hnrss.org/frontpage?points=100"
 region = "en"
 tags = ["dev"]
+
+[[feed]]
+name = "Show HN"
+url = "https://hnrss.org/show?points=50"
+region = "en"
+tags = ["dev"]
+
+[[feed]]
+name = "Reddit"
+# Reddit は未認証だとすぐレート制限されるので、サブレディットをまとめて1リクエストにする
+url = "https://www.reddit.com/r/LocalLLaMA+MachineLearning+singularity+ClaudeAI+programming+hardware/top/.rss?t=day&limit=40"
+region = "en"
 
 [[feed]]
 name = "Lobsters"
@@ -18,14 +103,21 @@ region = "en"
 tags = ["dev"]
 
 [[feed]]
-name = "Simon Willison"
-url = "https://simonwillison.net/atom/everything/"
+name = "GitHub Trending"
+url = "https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml"
 region = "en"
-tags = ["ai"]
+tags = ["dev"]
 
 [[feed]]
-name = "TechCrunch AI"
-url = "https://techcrunch.com/category/artificial-intelligence/feed/"
+name = "HF Daily Papers"
+url = "https://papers.takara.ai/api/feed"
+region = "en"
+tags = ["ai"]
+limit = 20
+
+[[feed]]
+name = "Simon Willison"
+url = "https://simonwillison.net/atom/everything/"
 region = "en"
 tags = ["ai"]
 
@@ -34,45 +126,21 @@ name = "OpenAI"
 url = "https://openai.com/news/rss.xml"
 region = "en"
 tags = ["ai"]
-limit = 30
+limit = 20
 
 [[feed]]
 name = "Google DeepMind"
 url = "https://deepmind.google/blog/rss.xml"
 region = "en"
 tags = ["ai"]
-limit = 30
+limit = 20
 
 [[feed]]
 name = "Hugging Face"
 url = "https://huggingface.co/blog/feed.xml"
 region = "en"
 tags = ["ai"]
-limit = 30
-
-[[feed]]
-name = "GitHub Blog"
-url = "https://github.blog/feed/"
-region = "en"
-tags = ["dev"]
-
-[[feed]]
-name = "The Verge"
-url = "https://www.theverge.com/rss/index.xml"
-region = "en"
-filter = true
-
-[[feed]]
-name = "Ars Technica"
-url = "https://feeds.arstechnica.com/arstechnica/index"
-region = "en"
-filter = true
-
-[[feed]]
-name = "The Register"
-url = "https://www.theregister.com/headlines.atom"
-region = "en"
-filter = true
+limit = 20
 
 [[feed]]
 name = "Tom's Hardware"
@@ -86,36 +154,12 @@ url = "https://www.servethehome.com/feed/"
 region = "en"
 tags = ["hw"]
 
-# ---------- 中華圏 (中国語) ----------
+# ================= 中華圏 =================
 [[feed]]
 name = "量子位"
 url = "https://www.qbitai.com/feed"
 region = "zh"
 tags = ["ai"]
-
-[[feed]]
-name = "雷峰网"
-url = "https://www.leiphone.com/feed"
-region = "zh"
-filter = true
-
-[[feed]]
-name = "36氪"
-url = "https://36kr.com/feed"
-region = "zh"
-filter = true
-
-[[feed]]
-name = "极客公园"
-url = "https://www.geekpark.net/rss"
-region = "zh"
-filter = true
-
-[[feed]]
-name = "爱范儿"
-url = "https://www.ifanr.com/feed"
-region = "zh"
-filter = true
 
 [[feed]]
 name = "IT之家"
@@ -124,12 +168,44 @@ region = "zh"
 filter = true
 
 [[feed]]
-name = "V2EX 程序员"
-url = "https://www.v2ex.com/feed/programmer.xml"
+name = "V2EX"
+url = "https://www.v2ex.com/feed/tab/tech.xml"
+region = "zh"
+tags = ["dev"]
+limit = 20
+og = false
+
+[[feed]]
+name = "Solidot"
+url = "https://www.solidot.org/index.rss"
+region = "zh"
+filter = true
+
+[[feed]]
+name = "蓝点网"
+url = "https://www.landiannews.com/feed"
+region = "zh"
+filter = true
+
+[[feed]]
+name = "雷峰网"
+url = "https://www.leiphone.com/feed"
+region = "zh"
+filter = true
+
+[[feed]]
+name = "小众软件"
+url = "https://www.appinn.com/feed/"
 region = "zh"
 tags = ["dev"]
 
-# ---------- 中華圏 (英語で中国テックを報じるメディア) ----------
+[[feed]]
+name = "阮一峰周刊"
+url = "https://www.ruanyifeng.com/blog/atom.xml"
+region = "zh"
+tags = ["dev"]
+
+# 中国テックを英語で速報するメディア
 [[feed]]
 name = "TechNode"
 url = "https://technode.com/feed/"
@@ -140,11 +216,5 @@ limit = 40
 [[feed]]
 name = "Pandaily"
 url = "https://pandaily.com/feed/"
-region = "zh"
-filter = true
-
-[[feed]]
-name = "SCMP Tech"
-url = "https://www.scmp.com/rss/36/feed"
 region = "zh"
 filter = true
