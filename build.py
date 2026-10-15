@@ -409,6 +409,12 @@ def main() -> None:
     (OUT / "items.json").write_text(payload, "utf-8")
     template = (ROOT / "web" / "index.html").read_text("utf-8")
     page = template.replace("/*__DATA__*/null", payload.replace("</", "<\\/"))
+    # Apps Script (HtmlService) 経由で表示すると、スクリプト中の "//" 以降がコメント扱いで
+    # 削られて壊れるため、コメント行を消してから文字列中の "//" を "/\/" (同じ意味) に置き換える
+    head, script = page.split("<script>", 1)
+    script, tail = script.split("</script>", 1)
+    script = re.sub(r"(?m)^\s*//.*\n", "", script).replace("//", "/\\/")
+    page = f"{head}<script>{script}</script>{tail}"
     (OUT / "index.html").write_text(page, "utf-8")
     write_rss(items, generated)
     print(f"→ {OUT / 'index.html'}")
