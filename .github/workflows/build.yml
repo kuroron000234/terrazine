@@ -25,7 +25,7 @@ jobs:
     env:
       # Cloudflare Pages にも公開する (会社のネットワークから github.io が開けないため)
       # リポジトリの Secrets に両方設定されていなければスキップする
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CLOUDEFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v4
