@@ -27,6 +27,18 @@ OUT = ROOT / "site"
 KEEP_DAYS = 7
 DEFAULT_LIMIT = 50
 MAX_OG_FETCH = 200  # 1回の実行で og:image を取りに行く最大記事数
+# 翻訳 (Gemini API 無料枠)。無料枠は1日のリクエスト数が少ないので、まとめて送って回数を抑える
+GEMINI_MODELS = ["gemini-3.5-flash-lite", "gemini-3.8-flash"]  # 上限に達したら次のモデルへ
+TRANSLATE_BATCH = 40     # 1リクエストで翻訳する記事数
+TRANSLATE_REQUESTS = 2   # 1回の実行で送る最大リクエスト数 (毎時実行なので1日最大48回)
+TRANSLATE_PROMPT = """以下はテックニュースの見出し(t)と概要(s)のJSON配列です。それぞれを自然な日本語に翻訳してください。
+- 見出しは日本のテックニュースサイトの見出しらしく、簡潔に
+- 企業名・製品名・モデル名・人名は一般的な表記を使い、定着した日本語表記がなければ原語のまま
+- "owner/repo" 形式のリポジトリ名やコード片は翻訳しない
+- s が空なら s も空のまま
+入力と同じ id を使い、[{"id": "...", "t": "...", "s": "..."}] の形の JSON 配列だけを返してください。
+
+"""
 UA = "Mozilla/5.0 (compatible; terrazine/1.0; personal feed reader)"
 
 # 英数字キーワードは前後が英数字でない位置でだけ一致させる (AI が "said" に当たらないように)。
@@ -279,6 +291,60 @@ def fetch_og_image(item: dict) -> None:
         pass
 
 
+def gemini_translate(batch: list[dict], model: str, key: str) -> dict[str, dict]:
+    payload = [{"id": it["id"], "t": it["title"], "s": it["summary"]} for it in batch]
+    r = requests.post(
+        f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+        headers={"x-goog-api-key": key},
+        json={
+            "contents": [{"parts": [{"text": TRANSLATE_PROMPT + json.dumps(payload, ensure_ascii=False)}]}],
+            "generationConfig": {"temperature": 0.2, "responseMimeType": "application/json"},
+        },
+        timeout=180,
+    )
+    r.raise_for_status()
+    text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
+    return {row["id"]: row for row in json.loads(text) if isinstance(row, dict) and "id" in row}
+
+
+def translate(items: list[dict]) -> None:
+    """英語圏・中華圏の記事の見出しと概要に title_ja / summary_ja を付ける。新しい記事から順に。"""
+    key = os.environ.get("GEMINI_API_KEY")
+    if not key:
+        print("  (GEMINI_API_KEY が未設定のため翻訳をスキップ)")
+        return
+    todo = [it for it in items if it["region"] != "ja" and "title_ja" not in it]
+    models = list(GEMINI_MODELS)
+    done = 0
+    for i in range(TRANSLATE_REQUESTS):
+        batch = todo[i * TRANSLATE_BATCH:(i + 1) * TRANSLATE_BATCH]
+        while batch and models:
+            try:
+                result = gemini_translate(batch, models[0], key)
+                break
+            except requests.HTTPError as e:
+                code = e.response.status_code
+                print(f"  ! 翻訳 {models[0]}: HTTP {code} {e.response.text[:200]}", file=sys.stderr)
+                if code in (429, 404, 403):  # 上限到達・モデル廃止など → 次のモデルへ
+                    models.pop(0)
+                    continue
+                return
+            except Exception as e:  # JSON が壊れていた場合など。次回の実行で再挑戦する
+                print(f"  ! 翻訳 {models[0]}: {type(e).__name__}: {e}", file=sys.stderr)
+                return
+        else:
+            break
+        for it in batch:
+            row = result.get(it["id"])
+            if row and row.get("t"):
+                it["title_ja"] = row["t"].strip()
+                if it["summary"] and row.get("s"):
+                    it["summary_ja"] = row["s"].strip()
+                done += 1
+    left = sum(1 for it in items if it["region"] != "ja" and "title_ja" not in it)
+    print(f"  翻訳 {done}件 (未翻訳 残り{left}件)")
+
+
 def load_previous() -> list[dict]:
     url = os.environ.get("PREV_URL")
     path = OUT / "items.json"
@@ -328,6 +394,7 @@ def main() -> None:
     with_img = sum(1 for it in items if it.get("image"))
     print(f"新規取得 {len(fresh)}件 / 保持 {len(items)}件 / 画像あり {with_img}件 "
           f"(og:image {len(need_og)}件取得, {time.time() - t0:.1f}秒)")
+    translate(items)
 
     generated = datetime.now(timezone.utc)
     data = {

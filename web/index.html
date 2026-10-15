@@ -319,7 +319,7 @@ function card(it) {
         <time datetime="${it.published}" title="${esc(new Date(it.published).toLocaleString("ja-JP"))}">${clock(it.published)} · ${rel(it.published)}</time>
         ${isNew ? '<span class="new">NEW</span>' : ""}
       </div>
-      <a class="title" href="${esc(it.link)}" target="_blank" rel="noopener">${esc(it.title)}${it.title_ja ? `<span class="ja">${esc(it.title_ja)}</span>` : ""}</a>
+      <a class="title" href="${esc(it.link)}" target="_blank" rel="noopener">${esc(it.title_ja || it.title)}${it.title_ja ? `<span class="ja">${esc(it.title)}</span>` : ""}</a>
       ${it.summary ? `<p class="summary">${esc(it.summary_ja || it.summary)}</p>` : ""}
       <div class="foot">${extra}</div>
     </div>
