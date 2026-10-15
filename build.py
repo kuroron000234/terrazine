@@ -17,7 +17,9 @@ import tomllib
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
+from email.utils import format_datetime
+from urllib.parse import parse_qsl, quote, urlencode, urljoin, urlsplit, urlunsplit
+from xml.sax.saxutils import escape
 
 import feedparser
 import requests
@@ -28,6 +30,19 @@ KEEP_DAYS = 7
 DEFAULT_LIMIT = 50
 MAX_OG_FETCH = 200  # 1回の実行で og:image を取りに行く最大記事数
 UA = "Mozilla/5.0 (compatible; terrazine/1.0; personal feed reader)"
+SITE_URL = os.environ.get("SITE_URL", "https://kuroron000234.github.io/terrazine").rstrip("/")
+FEED_ITEMS = 200
+REGION_CODE = {"ja": "JP", "en": "EN", "zh": "CN"}
+# RSS の出力先: ファイル名 → (タイトル, 記事の条件)
+FEEDS_OUT = {
+    "all": ("TERRAZINE", lambda it: True),
+    "ja": ("TERRAZINE / 日本", lambda it: it["region"] == "ja"),
+    "en": ("TERRAZINE / 英語圏", lambda it: it["region"] == "en"),
+    "zh": ("TERRAZINE / 中華圏", lambda it: it["region"] == "zh"),
+    "ai": ("TERRAZINE / #AI", lambda it: "ai" in it["tags"]),
+    "dev": ("TERRAZINE / #DEV", lambda it: "dev" in it["tags"]),
+    "hw": ("TERRAZINE / #HW", lambda it: "hw" in it["tags"]),
+}
 
 # 英数字キーワードは前後が英数字でない位置でだけ一致させる (AI が "said" に当たらないように)。
 # 先頭に "=" を付けたものは大文字小文字を区別する。
@@ -314,6 +329,60 @@ def merge(prev: list[dict], fresh: list[dict]) -> list[dict]:
     return items
 
 
+def rss_item(it: dict) -> str:
+    """Feedly などで読みやすいよう、見出しに地域、本文にサムネイルとリンクを入れる。"""
+    code = REGION_CODE[it["region"]]
+    title = it.get("title_ja") or it["title"]
+    body = []
+    if it.get("image"):
+        body.append(f'<p><img src="{escape(it["image"], {chr(34): "&quot;"})}" referrerpolicy="no-referrer"></p>')
+    if it.get("title_ja"):
+        body.append(f"<p>{escape(it['title'])}</p>")
+    if it.get("summary_ja") or it.get("summary"):
+        body.append(f"<p>{escape(it.get('summary_ja') or it['summary'])}</p>")
+    meta = [f"[{code}] {escape(it['source'])}" + (f" · {escape(it['via'])}" if it.get("via") else "")]
+    if it.get("score"):
+        meta.append(f"▲{it['score']}")
+    if it.get("replies"):
+        meta.append(f"{it['replies']}レス")
+    meta += [f"#{t.upper()}" for t in it["tags"]]
+    links = []
+    if it["region"] != "ja":
+        tr = "https://translate.google.com/translate?sl=auto&tl=ja&hl=ja&u=" + quote(it["link"], safe="")
+        links.append(f'<a href="{escape(tr)}">日本語で読む</a>')
+    if it.get("comments"):
+        links.append(f'<a href="{escape(it["comments"])}">コメント</a>')
+    body.append("<p>" + " ".join(meta) + ("<br>" + " | ".join(links) if links else "") + "</p>")
+    image = ""
+    if it.get("image"):
+        image = f'<media:content url="{escape(it["image"], {chr(34): "&quot;"})}" medium="image"/>'
+    cats = "".join(f"<category>{t}</category>" for t in [code, *it["tags"]])
+    return (
+        f"<item><title>{escape(f'[{code}] {title}')}</title><link>{escape(it['link'])}</link>"
+        f'<guid isPermaLink="false">{it["id"]}</guid>'
+        f"<pubDate>{format_datetime(datetime.fromisoformat(it['published']))}</pubDate>"
+        f"<dc:creator>{escape(it['source'])}</dc:creator>{cats}{image}"
+        f"<description>{escape(''.join(body))}</description></item>"
+    )
+
+
+def write_rss(items: list[dict], generated: datetime) -> None:
+    for name, (title, cond) in FEEDS_OUT.items():
+        selected = [it for it in items if cond(it)][:FEED_ITEMS]
+        xml = (
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/" '
+            'xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel>'
+            f"<title>{escape(title)}</title><link>{SITE_URL}/</link>"
+            f'<atom:link href="{SITE_URL}/{name}.xml" rel="self" type="application/rss+xml"/>'
+            "<description>日本・英語圏・中華圏のテックニュース</description><language>ja</language>"
+            f"<lastBuildDate>{format_datetime(generated)}</lastBuildDate>"
+            + "".join(rss_item(it) for it in selected)
+            + "</channel></rss>\n"
+        )
+        (OUT / f"{name}.xml").write_text(xml, "utf-8")
+
+
 def main() -> None:
     feeds = tomllib.loads((ROOT / "feeds.toml").read_text("utf-8"))["feed"]
     print(f"{len(feeds)}フィードを取得中…")
@@ -329,8 +398,9 @@ def main() -> None:
     print(f"新規取得 {len(fresh)}件 / 保持 {len(items)}件 / 画像あり {with_img}件 "
           f"(og:image {len(need_og)}件取得, {time.time() - t0:.1f}秒)")
 
+    generated = datetime.now(timezone.utc)
     data = {
-        "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "generated": generated.isoformat(timespec="seconds"),
         "sources": [{"name": f["name"], "region": f["region"]} for f in feeds],
         "items": items,
     }
@@ -340,6 +410,7 @@ def main() -> None:
     template = (ROOT / "web" / "index.html").read_text("utf-8")
     page = template.replace("/*__DATA__*/null", payload.replace("</", "<\\/"))
     (OUT / "index.html").write_text(page, "utf-8")
+    write_rss(items, generated)
     print(f"→ {OUT / 'index.html'}")
 
 

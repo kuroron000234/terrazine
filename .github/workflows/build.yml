@@ -35,6 +35,7 @@ jobs:
         env:
           # 前回公開分とマージして、フィードから消えた記事も7日間は残す
           PREV_URL: ${{ steps.pages.outputs.base_url }}/items.json
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
         run: python build.py
       - uses: actions/upload-pages-artifact@v3
         with:
