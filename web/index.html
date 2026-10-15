@@ -269,7 +269,7 @@ store.set("lastVisit", new Date().toISOString());
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const pad = (n) => String(n).padStart(2, "0");
-const translateUrl = (u) => `https://translate.google.com/translate?sl=auto&tl=ja&hl=ja&u=${encodeURIComponent(u)}`;
+const translateUrl = (u) => `https:/\/translate.google.com/translate?sl=auto&tl=ja&hl=ja&u=${encodeURIComponent(u)}`;
 const text = (it) => `${it.title} ${it.title_ja || ""} ${it.summary}`;
 
 function rel(iso) {
@@ -284,8 +284,8 @@ function dayLabel(iso) {
   const d = new Date(iso), t = new Date(), y = new Date(); y.setDate(t.getDate() - 1);
   const ymd = `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}`;
   const wd = "日月火水木金土"[d.getDay()];
-  if (d.toDateString() === t.toDateString()) return `${ymd} (${wd}) // TODAY`;
-  if (d.toDateString() === y.toDateString()) return `${ymd} (${wd}) // YESTERDAY`;
+  if (d.toDateString() === t.toDateString()) return `${ymd} (${wd}) /\/ TODAY`;
+  if (d.toDateString() === y.toDateString()) return `${ymd} (${wd}) /\/ YESTERDAY`;
   return `${ymd} (${wd})`;
 }
 
@@ -386,7 +386,7 @@ function renderActive() {
   const el = $("active");
   const label = state.trend ? `trend: ${state.trend[0]}` : state.source ? `source: ${state.source}` : "";
   el.className = "active-filter" + (label ? " on" : "");
-  el.innerHTML = label ? `<span>// filter</span><button id="clear">${esc(label)} ×</button>` : "";
+  el.innerHTML = label ? `<span>/\/ filter</span><button id="clear">${esc(label)} ×</button>` : "";
   if (label) $("clear").onclick = () => { state.trend = null; state.source = ""; update(); };
 }
 
