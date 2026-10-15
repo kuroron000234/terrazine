@@ -2,13 +2,11 @@
 // 会社のネットワークで github.io / pages.dev が「未分類」として開けないため、
 // Google のサーバー側でページを取得して、そのまま返す。
 // データは毎時 GitHub Actions が更新するので、このスクリプトを変更する必要はない。
-
-const SOURCE = "https://kuroron000234.github.io/terrazine/index.html";
-
 function doGet() {
-  const res = UrlFetchApp.fetch(SOURCE, { muteHttpExceptions: true });
+  var url = "https://kuroron000234.github.io/terrazine/index.html";
+  var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
   if (res.getResponseCode() !== 200) {
-    return HtmlService.createHtmlOutput("<p>TERRAZINE を取得できませんでした (" + res.getResponseCode() + ")</p>");
+    return HtmlService.createHtmlOutput("TERRAZINE error: " + res.getResponseCode());
   }
   return HtmlService.createHtmlOutput(res.getContentText("UTF-8"))
     .setTitle("TERRAZINE")
