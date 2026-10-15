@@ -9,6 +9,7 @@
 - `build.py` … フィードを取得 → キーワードでタグ付け → サムネイル取得（フィード内画像、なければ記事の og:image）→ `site/index.html` と `site/items.json` を生成
 - `web/index.html` … ページのテンプレート（データはビルド時に埋め込み）
 - `.github/workflows/build.yml` … 毎時実行して GitHub Pages に公開。前回の `items.json` とマージするので、記事は7日間残る
+- `apps-script/Code.gs` … 会社のネットワークで github.io が開けないため、script.google.com 経由で表示するための Google Apps Script（ウェブアプリとしてデプロイ）
 
 ## ローカルで動かす
 
@@ -29,4 +30,5 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 - `filter = true` のフィードは `build.py` の `KEYWORDS` に一致した記事だけ残す
 - 記事に `title_ja` / `summary_ja` があればページに表示される（翻訳を後で足すときの差し込み口。マージ時も保持される）
 - 翻訳が入るまでは各記事の「日本語で読む」から Google 翻訳経由で読める
+- Apps Script 経由だとスクリプト中の `//` がコメント扱いで削られるため、ビルド時に置き換えている
 - Reddit は未認証だとレート制限が厳しいので、サブレディットを `r/A+B+C` でまとめて1回だけ取得している
