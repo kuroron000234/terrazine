@@ -1,0 +1,150 @@
+# 収集するフィード一覧
+# region: "en"(英語圏) / "zh"(中華圏)
+# tags:   このフィードの記事に常に付けるタグ (ai / dev / hw)
+# filter: true にすると、キーワードに一致した記事だけ残す (雑多な総合メディア向け)
+# limit:  1回の取得で使う最大件数 (大量に返すフィード対策)
+
+# ---------- 英語圏 ----------
+[[feed]]
+name = "Hacker News"
+url = "https://hnrss.org/frontpage?points=100"
+region = "en"
+tags = ["dev"]
+
+[[feed]]
+name = "Lobsters"
+url = "https://lobste.rs/rss"
+region = "en"
+tags = ["dev"]
+
+[[feed]]
+name = "Simon Willison"
+url = "https://simonwillison.net/atom/everything/"
+region = "en"
+tags = ["ai"]
+
+[[feed]]
+name = "TechCrunch AI"
+url = "https://techcrunch.com/category/artificial-intelligence/feed/"
+region = "en"
+tags = ["ai"]
+
+[[feed]]
+name = "OpenAI"
+url = "https://openai.com/news/rss.xml"
+region = "en"
+tags = ["ai"]
+limit = 30
+
+[[feed]]
+name = "Google DeepMind"
+url = "https://deepmind.google/blog/rss.xml"
+region = "en"
+tags = ["ai"]
+limit = 30
+
+[[feed]]
+name = "Hugging Face"
+url = "https://huggingface.co/blog/feed.xml"
+region = "en"
+tags = ["ai"]
+limit = 30
+
+[[feed]]
+name = "GitHub Blog"
+url = "https://github.blog/feed/"
+region = "en"
+tags = ["dev"]
+
+[[feed]]
+name = "The Verge"
+url = "https://www.theverge.com/rss/index.xml"
+region = "en"
+filter = true
+
+[[feed]]
+name = "Ars Technica"
+url = "https://feeds.arstechnica.com/arstechnica/index"
+region = "en"
+filter = true
+
+[[feed]]
+name = "The Register"
+url = "https://www.theregister.com/headlines.atom"
+region = "en"
+filter = true
+
+[[feed]]
+name = "Tom's Hardware"
+url = "https://www.tomshardware.com/feeds/all"
+region = "en"
+tags = ["hw"]
+
+[[feed]]
+name = "ServeTheHome"
+url = "https://www.servethehome.com/feed/"
+region = "en"
+tags = ["hw"]
+
+# ---------- 中華圏 (中国語) ----------
+[[feed]]
+name = "量子位"
+url = "https://www.qbitai.com/feed"
+region = "zh"
+tags = ["ai"]
+
+[[feed]]
+name = "雷峰网"
+url = "https://www.leiphone.com/feed"
+region = "zh"
+filter = true
+
+[[feed]]
+name = "36氪"
+url = "https://36kr.com/feed"
+region = "zh"
+filter = true
+
+[[feed]]
+name = "极客公园"
+url = "https://www.geekpark.net/rss"
+region = "zh"
+filter = true
+
+[[feed]]
+name = "爱范儿"
+url = "https://www.ifanr.com/feed"
+region = "zh"
+filter = true
+
+[[feed]]
+name = "IT之家"
+url = "https://www.ithome.com/rss/"
+region = "zh"
+filter = true
+
+[[feed]]
+name = "V2EX 程序员"
+url = "https://www.v2ex.com/feed/programmer.xml"
+region = "zh"
+tags = ["dev"]
+
+# ---------- 中華圏 (英語で中国テックを報じるメディア) ----------
+[[feed]]
+name = "TechNode"
+url = "https://technode.com/feed/"
+region = "zh"
+filter = true
+limit = 40
+
+[[feed]]
+name = "Pandaily"
+url = "https://pandaily.com/feed/"
+region = "zh"
+filter = true
+
+[[feed]]
+name = "SCMP Tech"
+url = "https://www.scmp.com/rss/36/feed"
+region = "zh"
+filter = true
